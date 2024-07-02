@@ -6,7 +6,7 @@
 %  * @LastEditors: Ke Wang
 %  * @LastEditTime: 2024-07-01 20:06:33
 %  */
-function J = Jacobi_matrix(n,nPQ,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus)
+function J = Jacobi_matrix(n,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus)
         % H N M L
         % H = zeros(n-1,n-1);
         % N = zeros(n-1,nPQ);
@@ -30,8 +30,8 @@ function J = Jacobi_matrix(n,nPQ,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus)
         H(:,slackbus) = [];
 
         % N
-        for i=1:n-1
-            for j=1:nPQ
+        for i=1:n
+            for j=1:n
                 if i~=j
                     N(i,j)=-U(i)*U(j)*(G(i,j)*cos(cita(i)-cita(j))+B(i,j)*sin(cita(i)-cita(j)));
                 else
@@ -40,14 +40,15 @@ function J = Jacobi_matrix(n,nPQ,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus)
             end
         end
         N(slackbus,:) = [];
+        N(:,slackbus) = -inf;
         for k = 1:nPV
             N(:,PVbus(k)) = -inf;
         end
-        N(:,[find(N(:,:) == -inf)]) = [];
+        N(:,[find(N(1,:) == -inf)]) = [];
 
-        % M
-        for i=1:nPQ
-            for j=1:n-1
+        % Minf
+        for i=1:n
+            for j=1:n
                 if i~=j
                     M(i,j)=U(i)*U(j)*(G(i,j)*cos(cita(i)-cita(j))+B(i,j)*sin(cita(i)-cita(j)));
                 else
@@ -56,15 +57,16 @@ function J = Jacobi_matrix(n,nPQ,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus)
             end
         end
         M(:,slackbus) = [];
+        M(slackbus,:) = -inf;
         for k = 1:nPV
             M(PVbus(k),:) = -inf;
         end
-        M([find(M(:,:) == -inf)],:) = [];
+        M([find(M(:,1) == -inf)],:) = [];
 
 
         % L
-        for i=1:nPQ
-            for j=1:nPQ
+        for i=1:n
+            for j=1:n
                 if i~=j
                     L(i,j)=-U(i)*U(j)*(G(i,j)*sin(cita(i)-cita(j))-B(i,j)*cos(cita(i)-cita(j)));
                 else
@@ -72,12 +74,17 @@ function J = Jacobi_matrix(n,nPQ,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus)
                 end
             end
         end
+        L(slackbus,:) = -inf;
         for k = 1:nPV
             L(PVbus(k),:) = -inf;
+        end
+        L([find(L(:,1) == -inf)],:) = [];
+
+        L(:,slackbus) = -inf;
+        for k = 1:nPV
             L(:,PVbus(k)) = -inf;
         end
-        L([find(L(:,:) == -inf)],:) = [];
-        L(:,[find(L(:,:) == -inf)]) = [];
+        L(:,[find(L(1,:) == -inf)]) = [];
     
         J=[H N;M L]; 
 end

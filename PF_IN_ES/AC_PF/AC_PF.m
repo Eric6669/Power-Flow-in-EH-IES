@@ -7,7 +7,7 @@
 %  * @LastEditTime: 2024-07-01 20:13:03
 %  */
 
-function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
+function [U,cita,Sij] = AC_PF(mpc)
 
     %% Data init
     [baseMVA,bus,gen,branch]=deal(mpc.baseMVA,mpc.bus,mpc.gen,mpc.branch);
@@ -38,7 +38,7 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
     end
     Q_nPQ([find(Q_nPQ(:) == -inf)]) = [];
     [P_n_1,Q_nPQ]=deal(P_n_1'/baseMVA,Q_nPQ'/baseMVA);
-    disp('P_n_1,Q_nPQ matrix:');disp(P_n_1);disp(Q_nPQ);
+    % disp('P_n_1,Q_nPQ matrix:');disp(P_n_1);disp(Q_nPQ);
 
     %% voltage and its angle
     U = bus(:,8)'; 
@@ -46,21 +46,21 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
     cita = (deg2rad(cita));  % degree2rad
 
     % delete slackbus U&cita and PVbus U
-    U_n_1 = U;
-    cita_nPQ = cita;
-    U_n_1(slackbus) = -inf;
-    cita_nPQ(slackbus) = [];
+    U_nPQ = U;
+    cita_n_1 = cita;
+    U_nPQ(slackbus) = -inf;
+    cita_n_1(slackbus) = [];
     for k = 1:nPV
-        U_n_1(PVbus(k)) = -inf;
+        U_nPQ(PVbus(k)) = -inf;
     end
-    U_n_1([find(U_n_1(:) == -inf)]) = [];
-    disp('U_n_1,cita_nPQ matrix:');disp(U_n_1);disp(cita_nPQ);
+    U_nPQ([find(U_nPQ(:) == -inf)]) = [];
+    % disp('U_nPQ,cita_n_1 matrix:');disp(U_nPQ);disp(cita_n_1);
 
     %% node admittance matrix 
     Y = Y_matrix(n,branch); 
     G = real(Y);
     B = imag(Y);
-    disp('node admittance matrix:');disp(Y);
+    % disp('node admittance matrix:');disp(Y);
 
     %% Ubalanced dP&dQ caculation
     Pi = zeros(1,n);
@@ -83,10 +83,8 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
     Qi_nPQ([find(Qi_nPQ(:) == -inf)]) = [];
     dP_n_1 = P_n_1-Pi_n_1; % dP n-1  PQ + PV
     dQ_nPQ = Q_nPQ-Qi_nPQ; % dQ nPQ  PQ
-    disp('Ubalanced active power:dP_n_1');disp(dP_n_1);
-    disp('Ubalanced reactive power:dQ_nPQ');disp(dQ_nPQ);
-
-    
+    % disp('Ubalanced active power:dP_n_1');disp(dP_n_1);
+    % disp('Ubalanced reactive power:dQ_nPQ');disp(dQ_nPQ);
 
     %% Newton-Rapshon method 
     iter_time = 1;
@@ -94,34 +92,28 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
     epr = 1e-5; % 迭代收敛精度
     while iter_time < limit
         fprintf('%d iteration\n',iter_time);
-
-
-
-        J=Jacobi_matrix(n,nPQ,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus);
+        J=Jacobi_matrix(n,nPV,U,cita,B,G,Pi,Qi,slackbus,PVbus);
         dPQ = [dP_n_1 dQ_nPQ]';
         dUcita = (-inv(J)*dPQ)';      % inv(J)*dPQ  J\dPQ
 
-
-
         % cita correction
         dcita = dUcita(1:n-1);        % dcita1-dcita2-...-dcita(n-1)
-        cita_nPQ = cita_nPQ + dcita; 
-
+        cita_n_1 = cita_n_1 + dcita; 
 
         % voltage correction
         U_amplitude = zeros(nPQ,nPQ);
         for i = 1:nPQ
-            U_amplitude(i,i) = U_n_1(i);
+            U_amplitude(i,i) = U_nPQ(i);
         end
-        dU = (Us*dUcita(n:n+nPQ-1)')';  % 后m对应电压的修正量
-        U_n_1 = U_n_1 + dU;
+        dU = (U_amplitude*dUcita(n:n+nPQ-1)')';  % 后nPQ对应电压的修正量
+        U_nPQ = U_nPQ + dU;
        
         % Append slack bus and PV bus
         % citaslack = cita + slackbus cita 
         citaslack = zeros(n,1);
         index = (1:n)';index(slackbus) = [];
         for i = 1:length(index)
-            citaslack(index(i)) = cita_nPQ(i);
+            citaslack(index(i)) = cita_n_1(i);
         end
         citaslack(slackbus) = 0;
         cita = citaslack;
@@ -136,7 +128,7 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
         index(index(:) == -inf) = [];
 
         for i = 1:length(index)
-            UPVslack(index(i)) = U(i);
+            UPVslack(index(i)) = U_nPQ(i);
         end
         UPVslack(slackbus) = 1;
         for k = 1:nPV
@@ -153,24 +145,26 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
                 Qi(i) = Qi(i) + U(i)*U(j)*(G(i,j)*sin(cita(i)-cita(j))-B(i,j)*cos(cita(i)-cita(j)));
             end
         end
-        Pi(slackbus) = [];
-        Qi(slackbus) = -inf;
+        % delete slackbus Pi&Qi and PVbus Qi
+        Pi_n_1 = Pi;
+        Qi_nPQ = Qi;
+        Pi_n_1(slackbus) = [];
+        Qi_nPQ(slackbus) = -inf;
         for k = 1:nPV
-            Qi(PVbus(k),:) = -inf;
+            Qi_nPQ(PVbus(k)) = -inf;
         end
-        Qi([find(Qi(:) == -inf)], :) = [];
-        dP = P-Pi; % dP n-1  PQ + PV
-        dQ = Q-Qi; % dQ nPQ  PQ
+        Qi_nPQ([find(Qi_nPQ(:) == -inf)]) = [];
+        dP_n_1 = P_n_1-Pi_n_1; % dP n-1  PQ + PV
+        dQ_nPQ = Q_nPQ-Qi_nPQ; % dQ nPQ  PQ
 
-        if (max(abs(dP))<epr && max(abs(dQ))<epr )
+        if (max(abs(dP_n_1))<epr && max(abs(dQ_nPQ))<epr )
             disp('power flow converge!!!');
             break
         end
         iter_time = iter_time+1;
     end
 
-    
-
+    % admittance matrix y
     y=zeros(n,n);
     for i=1:n
         for j=1:n
@@ -181,19 +175,11 @@ function [U,cita,Pi,Qi,Sij] = AC_PF(mpc)
             end
         end
     end
-    Sij = line_power(n,y,U,cita);
+    Sij = Line_power(n,y,U,cita);
 
-    fprintf('迭代总次数：%d\n', iter_time);
-    disp('节点电压幅值：');
-    disp(U);
-    disp('节点电压相角：');
-    disp(rad2deg(cita));
-    % disp('节点注入有功计算结果：');
-    % disp(Pi);
-    % disp('节点注入无功计算结果：');
-    % disp(Qi);
-    disp('支路功率计算结果：');
-    disp(sparse(Sij))
+    disp('U:');disp(U);
+    disp('cita:');disp(rad2deg(cita));
+    disp('power flow:');disp(sparse(Sij))
 end
 
 
