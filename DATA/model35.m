@@ -83,7 +83,7 @@ model.node = [
 
 %%-----  System Data  -----%%																																																																																																																																																																																																														
 																																																																																																																																																																																																														
-model.water_c = 4.2e3; % (J*kg^(-1)*K^(-1))																																																																																																																																																																																																														
+model.water_c = 4182; % (J*kg^(-1)*K^(-1))																																																																																																																																																																																																														
 model.water_dens = 958.4; % Density of water (kg/m^3) at 100 degrees C																																																																																																																																																																																																														
 model.Pbase	=	1e6;	%	base	
 model.g = 9.81; % Gravitational acceleration
