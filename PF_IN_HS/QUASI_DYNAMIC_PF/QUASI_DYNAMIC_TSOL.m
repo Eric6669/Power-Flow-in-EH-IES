@@ -1,3 +1,11 @@
+% /*
+%  * @Descripttion: 
+%  * @version: 
+%  * @Author: Ke Wang
+%  * @Date: 2024-07-02 23:32:26
+%  * @LastEditors: Ke Wang
+%  * @LastEditTime: 2024-07-03 09:09:25
+%  */
 function [newTs,newTo,newTr] = QUASI_DYNAMIC_TSOL(Jk,Ah,m,Ts,To,nd,nloads)
     
     mq = Ah*m;
