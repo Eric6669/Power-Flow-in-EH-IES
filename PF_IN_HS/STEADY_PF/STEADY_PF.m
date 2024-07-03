@@ -9,7 +9,7 @@
 
 function [m,m_node,Ts,Tr] = STEADY_PF(model,adjustmethod)
 
-    %% Data init
+    %% -----------------------------------Data init-------------------------------------------------------------------------------------
     [pipe,node,Cp,rho,Pbase,g,viscosity] = deal(model.pipe,model.node,model.water_c,model.water_dens,model.Pbase,model.g,model.viscosity);
     nnodes = length(node(:,1));
     npipes = length(pipe(:,1));
@@ -88,6 +88,9 @@ function [m,m_node,Ts,Tr] = STEADY_PF(model,adjustmethod)
             % m = ones(npipes,1);
         case 2 % quality adjustment
             % m = filelocation (m result of case 1)
+            % load model35_result.mat m;
+            % load model51_result.mat m;
+            load model225_result.mat m;
     end
     
     %% node temperature
@@ -97,7 +100,7 @@ function [m,m_node,Ts,Tr] = STEADY_PF(model,adjustmethod)
     % assume source return temperature
     To = node(:,4)-Ta;
     Tr = To; 
-    
+    % ----------------------------------------------------------------------------------------------------------------------------------
     
     % --------------------------------------------Steady power flow-------------------------------------------------------------------
     % iteration times
@@ -221,7 +224,9 @@ function [m,m_node,Ts,Tr] = STEADY_PF(model,adjustmethod)
     disp('heat power of hslack Node (MWth)');fprintf('%f\n',Phi_hslack);
     
     % volume adjustment, save m result for quaility adjustment
-    
+    % save('./RESULT/model35_result.mat','m','m_node','Ts','Tr','Herr');
+    % save('./RESULT/model51_result.mat','m','m_node','Ts','Tr','Herr');
+    save('./RESULT/model225_result.mat','m','m_node','Ts','Tr','Herr');
 
 end
 
