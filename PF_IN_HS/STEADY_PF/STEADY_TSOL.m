@@ -56,7 +56,7 @@ function [newTs,newTo,newTr] = STEADY_TSOL(Kt,Ah,m,Ts,To,nd,nloads)
             if nd(index).mix_return == 1
                 Cr(nd(index).j,nd(index).i) = -m(nd(index).k)*Kt(nd(index).k);
                 br(nd(index).j) = mq(nd(index).j)*To(nd(index).j);
-                % 从j流出的所有m
+                % flow from j to others
                 if runonce(index) == 0
                     for index2 = 1:npipes
                         if nd(index2).i == nd(index).j
