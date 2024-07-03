@@ -17,7 +17,7 @@ function [newTs,newTo,newTr] = STEADY_TSOL(Kt,Ah,m,Ts,To,nd,nloads)
     Cr = zeros(nloads);
     br = zeros(nloads,1);
 
-    %% supplynetwork 
+    %% supplynetwork j-k-i
     for index = 1:npipes
         if nd(index).i <= nloads
             if nd(index).mix_supply == 1
@@ -39,7 +39,7 @@ function [newTs,newTo,newTr] = STEADY_TSOL(Kt,Ah,m,Ts,To,nd,nloads)
 
     newTs = [Cs\bs;Ts(nloads+1:nnodes)];    
 
-    %% returnnetwork i??k??>j
+    %% returnnetwork i-k-j
     % load nodes
     runonce = zeros(nnodes,1);
     for index1 = 1:npipes
