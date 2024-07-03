@@ -197,8 +197,8 @@ function [m,m_node,Ts,Tr] = STEADY_PF(model,adjustmethod)
             mq = Ah*m;
             Kt = exp(-lamda.*len./Cp./m);
             while thermal_err > 1e-3
-                %% thermal model
-                %% network topology description nd
+                % thermal model
+                % network topology description nd
                 nd = Net_Topo(npipes,nnodes,Ah);
                 [newTs,newTo,newTr] = STEADY_TSOL(Kt,Ah,m,Ts,To,nd,nloads);
                 newTs(nloads+1:nnodes-1) = Phi(nloads+1:nnodes-1)./mq(nloads+1:nnodes-1).*Pbase./Cp + Tr(nloads+1:nnodes-1);
