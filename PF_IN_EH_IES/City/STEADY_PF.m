@@ -90,7 +90,7 @@ function [m,m_node,Ts,Tr,Herr,Phi_chp2_hslack] = STEADY_PF(model,adjustmethod,Ph
     switch adjustmethod 
         case 1 % volume adjustment
             % m = pipe(:,8);
-            m = 500*ones(npipes,1);
+            m = 50*ones(npipes,1);
         case 2 % quality adjustment
             % m = filelocation (m result of case 1)
             % load model35_result.mat m;
