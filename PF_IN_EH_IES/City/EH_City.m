@@ -45,3 +45,4 @@ disp('U:');disp(U);
 disp('cita:');disp(rad2deg(cita));
 disp('power flow:');disp(sparse(Sij));
 Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Herr,Perr);
+% save('./EH_City_result.mat','m','m_node','Ts','Tr','Herr','U','cita','Perr');
