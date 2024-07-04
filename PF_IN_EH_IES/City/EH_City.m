@@ -4,7 +4,7 @@
 %  * @Author: Ke Wang
 %  * @Date: 2024-07-03 15:12:31
 %  * @LastEditors: Ke Wang
-%  * @LastEditTime: 2024-07-03 15:12:43
+%  * @LastEditTime: 2024-07-04 14:31:04
 %  */
 
 % CHP1 electricity slack node
