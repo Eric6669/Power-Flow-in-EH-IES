@@ -27,9 +27,10 @@ function [U,cita,Sij,P_chp1_eslack,Perr] = AC_PF(mpc,P_chp2_hslack,P_chp3)
         P(gen(k,1)) = P_CHP(k);
     end
 
-    load96  = deal(mpc.load);
-    load_chosen = load96(48,:)';
-    P = P-load_chosen(:,1);
+    % load96  = deal(mpc.load);
+    % load_chosen = load96(48,:)';
+    % P = P-load_chosen(:,1);
+    P = P-[14.691561 14.81079246 18.7688182	12.14369424	11.97208478	16.81207149	10.37756017	16.85288281	12.15589991	12.46009541	12.5129302	11.74373515	16.25854823	10.1479202	18.58549277	16.34207041	12.42993408	16.83571359	12.59095194]';
     Q = Q-bus(:,4);
 
     % delete slackbus P&Q and PVbus Q
