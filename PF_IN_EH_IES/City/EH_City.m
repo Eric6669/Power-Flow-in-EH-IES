@@ -8,7 +8,7 @@
 %  */
 
 % CHP1 electricity slack node
-Phi_chp1_eslack0 = 200;
+Phi_chp1_eslack0 = 20;
 
 % CHP3
 P_chp3 = 50;
@@ -18,18 +18,20 @@ Phi_chp3 = P_chp3*Cm3;
 Phichp1_totalerr = 1;
 while Phichp1_totalerr > 1e-3
     % volume adjustment in HS
-    [m,m_node,Ts,Tr,Herr,Phi_chp2_hslack] = STEADY_PF(Data_HS_City,1,Phi_chp1_eslack0,Phi_chp3);
-
+    % [m,m_node,Ts,Tr,Herr,Phi_chp2_hslack] = STEADY_PF(Data_HS_City,1,Phi_chp1_eslack0,Phi_chp3);
+    [m,m_node,Ts,Tr,Herr,Phi_chp2_hslack] = DYNAMIC_PF(Data_HS_City,1,Phi_chp1_eslack0,Phi_chp3);
+    
     % CHP2 heat slack node
     z2 = 8.1; 
-    Pcon2 = 100;
+    Pcon2 = 200;
     P_chp2_hslack = Pcon2-Phi_chp2_hslack/z2;
 
     % power flow in ES
     [U,cita,Sij,P_chp1_eslack,Perr] = AC_PF(Data_ES_City,P_chp2_hslack,P_chp3);
 
     % CHP1 electricity slack node
-    Cm1=1.3;
+    % Cm1=1.3;
+    Cm1=5;
     Phi_chp1_eslack = P_chp1_eslack*Cm1;
 
     % thermal power of the electrical slack node
@@ -44,5 +46,8 @@ disp('return temperature');disp(Tr);
 disp('U:');disp(U);
 disp('cita:');disp(rad2deg(cita));
 disp('power flow:');disp(sparse(Sij));
-Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Herr,Perr);
+fprintf('CHP1 Phi:%f\t,P:%f\n',Phi_chp1_eslack,P_chp1_eslack);
+fprintf('CHP2 Phi:%f\t,P:%f\n',Phi_chp2_hslack,P_chp2_hslack);
+fprintf('CHP3 Phi:%f\t,P:%f\n',Phi_chp3,P_chp3);
+% Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Herr,Perr);
 % save('./EH_City_result.mat','m','m_node','Ts','Tr','Herr','U','cita','Perr');
