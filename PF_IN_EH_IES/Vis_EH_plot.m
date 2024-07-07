@@ -36,7 +36,7 @@ function Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Herr,Perr)
 
     figure(3);
     subplot(2,1,1);
-    plot(cita/pi*180,'-^m');
+    plot(rad2deg(cita),'-^m');
     xlabel('Node number');
     ylabel('voltage angle (deg)');
     grid on;
