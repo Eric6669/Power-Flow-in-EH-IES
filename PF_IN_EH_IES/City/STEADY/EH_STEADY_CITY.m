@@ -1,3 +1,11 @@
+% /*
+%  * @Descripttion: 
+%  * @version: 
+%  * @Author: Ke Wang
+%  * @Date: 2024-07-06 09:10:17
+%  * @LastEditors: Ke Wang
+%  * @LastEditTime: 2024-07-08 19:59:05
+%  */
 clear;clc;
 HEAT_DATA;
 ELECTRICITY_DATA;
@@ -25,10 +33,10 @@ Qd = Pd./pf(1:n).*qf(1:n); % Qd the reactive power of PQ bus(nPQ variables)
 
 
 % CHP1 electricity slack node
-Phi_chp1_eslack0 = 50;
+Phi_chp1_eslack0 = 100;
 
 % CHP3
-P_chp3 = 20;
+P_chp3 = 10;
 Cm3 = 1.0/.79;
 Phi_chp3 = P_chp3*Cm3;
 
@@ -101,7 +109,7 @@ while Phichp1_totalerr > 1e-3
 
     % CHP2
     z2 = 8.1; 
-    Pcon2 = 100;
+    Pcon2 = 80;
     P_chp2_hslack = Pcon2-Phi_chp2_hslack/z2;
 
     %% -----------------------------------ES power flow------------------------------------- %%
