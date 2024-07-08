@@ -7,7 +7,7 @@
 %  * @LastEditTime: 2024-07-04 13:36:37
 %  */
 
-function Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Herr,Perr)
+function Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Total_Herr,Total_Perr)
     
     figure(1);
     subplot(2,1,1);
@@ -47,9 +47,9 @@ function Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Herr,Perr)
     grid on;
 
     figure(4);
-    plot(Herr,'-*r');
+    plot(Total_Herr,'-*r');
     hold on;
-    plot(Perr,'-db');
+    plot(Total_Perr,'-db');
     hold on;
     xlabel('Iteration number');
     ylabel('error');
