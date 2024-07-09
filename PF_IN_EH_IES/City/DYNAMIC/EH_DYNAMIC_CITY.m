@@ -10,6 +10,7 @@ clear;clc;
 HEAT_DATA;
 ELECTRICITY_DATA;
 INIT_DATA;INIT_FDM;
+
 % Phi load
 Phi = -[10.0294448	9.957627727	40.273569375	13.10859375	11.393594125...	
 10.923405292	2.343467	5.127948	10.021023333	13.09284013...	
@@ -30,7 +31,6 @@ Pd = [0 8.57740007	4.5612167	9.82378297	3.39667658	3.317028401...
 3.483253407	6.70720037	7.312133487	10.56469366	5.498683697	9.752618747	6.175174477]';
 Qd = Pd./pf(1:n).*qf(1:n); % Qd the reactive power of PQ bus(nPQ variables)
 
-
 % CHP1 electricity slack node
 Phi_chp1_eslack0 = 50;
 
@@ -49,21 +49,10 @@ while Phichp1_totalerr > 1e-3
     tic
     %% -----------------------------------HS power flow------------------------------------- %%
     for t = 1:N
-        for k = 1:npipes
-            for x = 1:M(k)
-                Bs{k}(x) = omega1(k)*Pipe_Ts{k}(x,t) + omega3(k)*Pipe_Ts{k}(x+1,t);
-                Br{k}(x) = omega1(k)*Pipe_Tr{k}(x,t) + omega3(k)*Pipe_Tr{k}(x+1,t);
-            end
-            b_supply{k} = Ak{k}*Bs{k};
-            b_return{k} = Ak{k}*Br{k};
-        end
-
-        % 每个时间断面求解
+        % time piece
         thermal_err = 1;
         hydraulic_err = 1;
         while hydraulic_err>1e-3||thermal_err>1e-3
-            %% hydraulic model
-            % update dT
             dT = [Ts(1:nloads)-To(1:nloads);Ts(nloads+1:nnodes-1)-Tr(nloads+1:nnodes-1)];      
             mfeedback = sign(m);
             % update Ah,Bh,m
@@ -94,16 +83,54 @@ while Phichp1_totalerr > 1e-3
             dhf = Bh*(Kf.*abs(m).*m);
             % loop pressure equation Jacobian
             Jhf = 2*Bh.*(Kf'.*abs(m'));
-    
-            % Jacobian update
-            % d_hydraulic = [dm;dhf];
+
             d_hydraulic = [dPhi;dhf];
             J_hydraulic = [JPhi;Jhf];
             delta_m = -J_hydraulic\d_hydraulic;
             hydraulic_err = max(abs(d_hydraulic));
             m = m + delta_m;
-            
-            %% thermal model
+
+            % FDM para
+            alpha = v.*tau./h;
+            belta = v.*tau./(2.*m.*Cp.*R);
+            omega1 = (ones(npipes,1)+alpha-belta)./(ones(npipes,1)+alpha+belta);
+            omega2 = (alpha-ones(npipes,1)-belta)./(ones(npipes,1)+alpha+belta);
+            omega3 = (ones(npipes,1)-alpha-belta)./(ones(npipes,1)+alpha+belta);
+
+            % omega2^M for each pipe
+            W = zeros(npipes,1);
+            for k = 1:npipes
+                W(k) = omega2(k)^M(k);
+            end
+
+            % A for each pipe
+            Ak = cell(npipes,1);
+            for k = 1:npipes
+                Ak{k} = zeros(1,M(k));
+                for x = 1:M(k)
+                    Ak{k}(x) = omega2(k)^(M(k)-x);
+                end
+            end
+
+            % Bs\Br for each pipe  bs = Ak*Bs br = Ak*Br
+            Bs = cell(npipes,1);
+            Br = cell(npipes,1);
+            b_supply = cell(npipes,1);
+            b_return = cell(npipes,1);
+            for k = 1:npipes
+                Bs{k} = zeros(M(k),1);
+                Br{k} = zeros(M(k),1);
+                b_supply{k} = zeros(M(k),1);
+                b_return{k} = zeros(M(k),1);
+            end
+            for k = 1:npipes
+                for x = 1:M(k)
+                    Bs{k}(x) = omega1(k)*Pipe_Ts{k}(x,t) + omega3(k)*Pipe_Ts{k}(x+1,t);
+                    Br{k}(x) = omega1(k)*Pipe_Tr{k}(x,t) + omega3(k)*Pipe_Tr{k}(x+1,t);
+                end
+                b_supply{k} = Ak{k}*Bs{k};
+                b_return{k} = Ak{k}*Br{k};
+            end
             % network topology
             nd = Net_Topo(npipes,nnodes,Ah);
             [newTs,newTo,newTr] = DYNAMIC_TSOL(W,b_return,b_supply,Ts,To,m,Ah,nd,nloads);
@@ -113,13 +140,13 @@ while Phichp1_totalerr > 1e-3
             To=newTo;
         end
 
-        %% nodeT = PipeT
+        % nodeT = PipeT
         for k = 1:npipes
             Pipe_Ts{nd(k).k}(1,t+1) = Ts(nd(k).j);
             Pipe_Tr{nd(k).k}(1,t+1) = Tr(nd(k).i);
         end
 
-        %% all T for t+1 
+        % all T for t+1 
         for k = 1:npipes
             Aki = cell(npipes,M(k));
             Bksi = cell(npipes,M(k));
@@ -147,6 +174,7 @@ while Phichp1_totalerr > 1e-3
         end
     end
 
+    %% -----------------------------------CHP2------------------------------------- %%
     m_node = Ah*m;
     Phi_chp2_hslack = Cp/Pbase*(-m_node(nnodes))*(Ts(nnodes)-Tr(nnodes));
 
@@ -286,8 +314,8 @@ while Phichp1_totalerr > 1e-3
         %     disp('power flow converge!!!');
         %     break
         % end
-        Perr = max([abs(dP_n_1)';abs(dQ_nPQ)']);
-        Total_Perr(t,:) = Perr;
+        % Perr = max([abs(dP_n_1)';abs(dQ_nPQ)']);
+        % Total_Perr(t,:) = Perr;
         t = t+1;
     end
     disp('power flow converge!!!');
@@ -296,6 +324,7 @@ while Phichp1_totalerr > 1e-3
     % S = U_cita.*conj(Y*U_cita');
     % S_slack = S(slackbus);
     % P_chp1_eslack = real(S_slack);
+    %% -----------------------------------CHP1------------------------------------- %%
     P_chp1_eslack = Pi(slackbus)*baseMVA;
     
     % CHP1 electricity slack node
