@@ -352,4 +352,4 @@ fprintf('CHP2(Heat slack node)        Phi:%f\t,P:%f\n',Phi_chp2_hslack,P_chp2_hs
 fprintf('CHP3(None slack node)        Phi:%f\t,P:%f\n',Phi_chp3,P_chp3);
 fprintf('electricity losses (MWe)     %f\n',Ploss);
 fprintf('heat losses (MWth)           %f\n',Philoss);
-Vis_EH_plot(m,m_node,Ts,Tr,U,cita,Total_Herr,Total_Perr);
+EH_DYNAMIC_VIS(m,m_node,Ts,Tr,U,cita,Pipe_Ts,Pipe_Tr,npipes,M);
