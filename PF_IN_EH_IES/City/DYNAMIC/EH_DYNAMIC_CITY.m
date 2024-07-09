@@ -314,7 +314,7 @@ while Phichp1_totalerr > 1e-3
         %     disp('power flow converge!!!');
         %     break
         % end
-        % Perr = max([abs(dP_n_1)';abs(dQ_nPQ)']);
+        Perr = max([abs(dP_n_1)';abs(dQ_nPQ)']);
         % Total_Perr(t,:) = Perr;
         t = t+1;
     end
