@@ -11,31 +11,13 @@ HEAT_DATA;
 ELECTRICITY_DATA;
 INIT_DATA;INIT_FDM;
 
-% Phi load
-Phi = -[10.0294448	9.957627727	40.273569375	13.10859375	11.393594125...	
-10.923405292	2.343467	5.127948	10.021023333	13.09284013...	
-20.405475779	6.8384421	3.187027754	44.06466183	0.094882667...	
-2.3901983	2.06179995	2.482797158	3.764163375	0.695273367	...
-5.7730113	2.376980375	2.930970992	5.905707488	7.852104925...
-8.6056397	7.272569967	1.201022375	0.7732263	5.063259234...
-50.8837266	6.75106659	28.33800991	5.64171148	8.965308196	...
-7.086144086	2.059494	25.58327568	7.388423982	3.10164321	4.07140726 13.15310534	6.009421514...
-8.74262627	10.9273357	8.317739864	8.028660155	7.694059215	12.673768	11.01184383	5.346804418...
-8.556597763	27.45703723	9.469866555	2.347831324	23.47174068	3.731597295	4.793815673	2.123330851...
-5.818911986	2.782336939	28.27255014	29.89465381	6.255552299	11.91517176	13.20652273]';
-% P load
-pf = 1*ones(n,1); % power factor at each bus except slack bus
-qf = sqrt(1-pf.*pf);
-Pd = [0 8.57740007	4.5612167	9.82378297	3.39667658	3.317028401...	
-9.41104592	5.711906167	0 0 8.081447453	3.700230923...	
-3.483253407	6.70720037	7.312133487	10.56469366	5.498683697	9.752618747	6.175174477]';
-Qd = Pd./pf(1:n).*qf(1:n); % Qd the reactive power of PQ bus(nPQ variables)
-
-% CHP1 electricity slack node
-Phi_chp1_eslack0 = 50;
+% CHP1 electricity slack node 
+% Phi_chp1_eslack = P_chp1_eslack*Cm1;
+Phi_chp1_eslack0 = 150;
+Cm1 = 1.3;
 
 % CHP3
-P_chp3 = 20;
+P_chp3 = 83.74;
 Cm3 = 1.0/.79;
 Phi_chp3 = P_chp3*Cm3;
 
@@ -44,6 +26,7 @@ Total_Herr = inf*ones(20,1);
 Total_Perr = Total_Herr;
 t = 1;
 
+Ah0=Ah;
 Phichp1_totalerr = 1;
 while Phichp1_totalerr > 1e-3
     tic
@@ -180,7 +163,7 @@ while Phichp1_totalerr > 1e-3
 
     % CHP2
     z2 = 8.1; 
-    Pcon2 = 100;
+    Pcon2 = 200;
     P_chp2_hslack = Pcon2-Phi_chp2_hslack/z2;
 
     %% -----------------------------------ES power flow------------------------------------- %%
@@ -324,11 +307,9 @@ while Phichp1_totalerr > 1e-3
     % S = U_cita.*conj(Y*U_cita');
     % S_slack = S(slackbus);
     % P_chp1_eslack = real(S_slack);
-    %% -----------------------------------CHP1------------------------------------- %%
     P_chp1_eslack = Pi(slackbus)*baseMVA;
     
     % CHP1 electricity slack node
-    Cm1=1.3;
     Phi_chp1_eslack = P_chp1_eslack*Cm1;
 
     % thermal power of the electrical slack node
@@ -337,6 +318,8 @@ while Phichp1_totalerr > 1e-3
 end
 toc
 Ts=Ts+Ta;Tr=Tr+Ta;To=To+Ta;
+[row,sign_flow]=find(Ah-Ah0); % return the correct flow direction
+m(sign_flow)=-m(sign_flow);
 Ploss = P_chp2_hslack + P_chp1_eslack + P_chp3 + sum(-Pd); 
 Philoss = Phi_chp1_eslack0 + Phi_chp2_hslack + Phi_chp3 + sum(Phi);
 
