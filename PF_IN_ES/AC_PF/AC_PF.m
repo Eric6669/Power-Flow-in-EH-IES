@@ -130,7 +130,7 @@ function [U,cita,Sij] = AC_PF(mpc)
         for i = 1:length(index)
             UPVslack(index(i)) = U_nPQ(i);
         end
-        UPVslack(slackbus) = 1;
+        UPVslack(slackbus) = 1.04;
         for k = 1:nPV
             UPVslack(PVbus(k)) = bus(PVbus(k),8);
         end
