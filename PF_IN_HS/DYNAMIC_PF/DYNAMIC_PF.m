@@ -1,6 +1,6 @@
 % /*
-%  * @Descripttion: 
-%  * @version: 
+%  * @Descripttion: model in DATA , adjustment 1 or 2
+%  * @version: 1.0
 %  * @Author: Ke Wang
 %  * @Date: 2024-07-02 23:33:20
 %  * @LastEditors: Ke Wang
