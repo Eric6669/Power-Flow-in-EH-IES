@@ -23,7 +23,7 @@ lamda=[.2 .2 .2]';%thermal conductivity
 Pbase=1e6;%base value of power
 Cp=4182; %J/kg/K specific capacity of water
 R = 1./lamda; % heat resistance
-
+Phi = [0.3 0.3]';
 
 Node_m_load = [2; 3];
 msteady = [2.712; 0.712; 2.289];
