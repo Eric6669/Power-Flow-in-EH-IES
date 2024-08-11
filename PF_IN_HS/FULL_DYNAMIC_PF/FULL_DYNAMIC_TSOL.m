@@ -6,8 +6,7 @@
 %  * @LastEditors: Ke Wang
 %  * @LastEditTime: 2024-07-03 09:11:02
 %  */
-function [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Ts,To,m,Ah,nd,nloads)
-    mq = Ah*m;
+function [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Node_Ts,Node_To,Pipe_m,Node_m,Ah,nd,nloads)
     npipes = size(Ah,2);
     nnodes = size(Ah,1);
 
