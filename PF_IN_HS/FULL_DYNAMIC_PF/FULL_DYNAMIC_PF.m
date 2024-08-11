@@ -82,6 +82,57 @@ for k = 1:nnodes
     Node_Hs{k}(:,1) = Hssteady(k);
 end
 
+
+%% ------------------------------------------------- FDM init ---------------------------------------------- %%
+% pipe temperature
+Pipe_Ta = -10;
+% cell Pipe_Ts Pipe_Tr Pipe_To
+Pipe_Ts = cell(npipes,1);
+Pipe_Tr = cell(npipes,1);
+Pipe_To = cell(npipes,1);
+for k = 1:npipes
+    % supply temperature
+    Pipe_Ts{k} = zeros(M(k)+1,N+1);
+    % return temperature
+    Pipe_Tr{k} = zeros(M(k)+1,N+1);
+    Pipe_To{k} = zeros(M(k)+1,N+1);
+end
+
+% ----------------------------------- Initial conditions(t=0) ----------------------------------- %
+% differ in different system 
+for k = 1:npipes
+    Tsi0 = 80*ones(M(k)+1,1)-Pipe_Ta;
+    Pipe_Ts{k}(:,1) = Tsi0;
+    Tri0 = 40*ones(M(k)+1,1)-Pipe_Ta;
+    Pipe_Tr{k}(:,1) = Tri0;
+end
+
+% ----------------------------------- Boundary conditions ----------------------------------- %
+% Ts,source temperature
+% Tr,load temperature
+for k = 1:npipes
+    % supply source temperature
+    Pipe_Ts{k}(1,2:N+1) = 80*ones(1,N)-Pipe_Ta;
+    % return loads temperature
+    Pipe_Tr{k}(1,2:N+1) = 40*ones(1,N)-Pipe_Ta;
+end
+
+% To temperature
+% Pipe_To{k}(:,1:N+1) = Pipe_Tr{k}(:,1:N+1);
+
+% node temperature
+Node_Ta = -10;
+Node_Ts = cell(nnodes,1);
+Node_To = cell(nnodes,1);
+Node_Tr = cell(nnodes,1);
+
+for k = 1:nnodes
+    Node_Ts{k} = 80*ones(N,1)-Node_Ta;
+    Node_To{k} = 40*ones(N,1)-Node_Ta;
+    Node_Tr{k} = Node_To{k};
+end
+
+
 for t = 1:N
     hydraulic_err = 1; thermal_err = 1;
     while hydraulic_err>1e-3 || thermal_err>1e-3
@@ -270,6 +321,10 @@ for t = 1:N
         end
     end
     % ----------------------------------- FDM para ----------------------------------- %
+    for k = 1:npipes
+        m(k) = sum(Pipe_m{k}(:,t))/M(k); 
+    end
+    v = m./s/rho;
     alpha = v.*tau./h;
     belta = v.*tau./(2.*m.*Cp.*R);
     omega1 = (ones(npipes,1)+alpha-belta)./(ones(npipes,1)+alpha+belta);
@@ -312,13 +367,44 @@ for t = 1:N
     end
     % network topology
     nd = Net_Topo(npipes,nnodes,Ah);
-    [newTs,newTo,newTr] = DYNAMIC_TSOL(W,b_return,b_supply,Ts,To,m,Ah,nd,nloads);
+    [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Node_Ts,Node_To,Pipe_m,Node_m,Ah,nd,nloads);
     thermal_err = max([abs(newTs-Ts);abs(newTr-Tr)]);
     Tr=newTr;
     Ts=newTs;
     To=newTo;
 end
 
+% nodeT = PipeT
+for k = 1:npipes
+    Pipe_Ts{nd(k).k}(1,t+1) = Ts(nd(k).j);
+    Pipe_Tr{nd(k).k}(1,t+1) = Tr(nd(k).i);
+end
 
+% all T for t+1 
+for k = 1:npipes
+    Aki = cell(npipes,M(k));
+    Bksi = cell(npipes,M(k));
+    Bkri = cell(npipes,M(k));
+end
+
+for k = 1:npipes
+    for x = 2:M(k)+1
+        Aki{k,x} = zeros(1,x-1);
+        Bksi{k,x} = zeros(x-1,1);
+        Bkri{k,x} = zeros(x-1,1);
+        for i = 1:x-1
+            Aki{k,x}(i) = omega2(k)^(i-1);
+            Bksi{k,x}(i) = omega1(k)*Pipe_Ts{k}(i,t) + omega3(k)*Pipe_Ts{k}(i+1,t);
+            Bkri{k,x}(i) = omega1(k)*Pipe_Tr{k}(i,t) + omega3(k)*Pipe_Tr{k}(i+1,t);
+        end
+    end
+end
+
+for k = 1:npipes
+    for x = 2:M(k)+1
+        Pipe_Ts{k}(x,t+1) = omega2(k)^(x-1)*Pipe_Ts{k}(1,t+1) + Aki{k,x}*Bksi{k,x};
+        Pipe_Tr{k}(x,t+1) = omega2(k)^(x-1)*Pipe_Tr{k}(1,t+1) + Aki{k,x}*Bkri{k,x};
+    end
+end
 
 
