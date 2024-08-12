@@ -86,7 +86,7 @@ end
 
 %% ------------------------------------------------- FDM init ---------------------------------------------- %%
 % pipe temperature
-Pipe_Ta = -10;
+Pipe_Ta = 10;
 % cell Pipe_Ts Pipe_Tr Pipe_To
 Pipe_Ts = cell(npipes,1);
 Pipe_Tr = cell(npipes,1);
@@ -102,9 +102,9 @@ end
 % ----------------------------------- Initial conditions(t=0) ----------------------------------- %
 % differ in different system 
 for k = 1:npipes
-    Tsi0 = 80*ones(M(k)+1,1)-Pipe_Ta;
+    Tsi0 = 100*ones(M(k)+1,1)-Pipe_Ta;
     Pipe_Ts{k}(:,1) = Tsi0;
-    Tri0 = 40*ones(M(k)+1,1)-Pipe_Ta;
+    Tri0 = 50*ones(M(k)+1,1)-Pipe_Ta;
     Pipe_Tr{k}(:,1) = Tri0;
 end
 
@@ -113,23 +113,23 @@ end
 % Tr,load temperature
 for k = 1:npipes
     % supply source temperature
-    Pipe_Ts{k}(1,2:N+1) = 80*ones(1,N)-Pipe_Ta;
+    Pipe_Ts{k}(1,2:N+1) = 100*ones(1,N)-Pipe_Ta;
     % return loads temperature
-    Pipe_Tr{k}(1,2:N+1) = 40*ones(1,N)-Pipe_Ta;
+    Pipe_Tr{k}(1,2:N+1) = 50*ones(1,N)-Pipe_Ta;
 end
 
 % To temperature
 % Pipe_To{k}(:,1:N+1) = Pipe_Tr{k}(:,1:N+1);
 
 % node temperature
-Node_Ta = -10;
+Node_Ta = 10;
 Node_Ts = cell(nnodes,1);
 Node_To = cell(nnodes,1);
 Node_Tr = cell(nnodes,1);
 
 for k = 1:nnodes
-    Node_Ts{k} = 80*ones(N+1,1)-Node_Ta;
-    Node_To{k} = 40*ones(N+1,1)-Node_Ta;
+    Node_Ts{k} = 100*ones(N+1,1)-Node_Ta;
+    Node_To{k} = 50*ones(N+1,1)-Node_Ta;
     Node_Tr{k} = Node_To{k};
 end
 
@@ -272,24 +272,28 @@ for t = 1:N
         
         % f5
         % m for load node
-        df5 = zeros(nnodes,1);
+        dT = zeros(nnodes,1);
         for k = 1:nloads
-            df5(k) =  Node_m{k}(t+1) - Node_m_load(k);
+            dT(k) = Node_Ts{k}(t+1)-Node_To{k}(t+1);
+        end
+        for k = (nloads+1):nnodes
+            dT(k) = Node_Ts{k}(t+1)-Node_Tr{k}(t+1);
+        end
+        df5 = zeros(nnodes,1);
+        Phi_except_hslack = Phi;
+        for k = 1:(nnodes-1)
+            df5(k) =  Node_m{k}(t+1) - (Phi_except_hslack(k))*Pbase/Cp/dT(k);
         end
         % H for source node
-        for k = (nloads+1):nnodes
-            df5(k) = Node_Hs{k}(t+1) - 1*1e6/rho/g; % supply H for source node --highest(MPa) P = rho*g*h(m)
-        end
+        df5(nnodes) = Node_Hs{k}(t+1) - 1*1e6/rho/g; % supply H for source node --highest(MPa) P = rho*g*h(m)
         f5 = df5;
 
         % Jf5Hn Jf5mn
         Jf5mn = zeros(nnodes,nnodes); Jf5Hn = zeros(nnodes,nnodes);
-        for k = 1:nloads
+        for k = 1:(nnodes-1)
             Jf5mn(k,k) = 1; 
         end
-        for k = (nloads+1):nnodes
-            Jf5Hn(k,k) = 1; 
-        end 
+        Jf5Hn(nnodes,nnodes) = 1; 
 
         d_hydraulic = [f1;f2;f3;f4;f5];
         J_hydraulic = [Jf1H Jf1m zeros(N_piece,nnodes) zeros(N_piece,nnodes);
