@@ -152,7 +152,7 @@ for t = 1:N
         end
         Kf = factor'.*len./D./s./s/2/g/rho/rho;
 
-        % ----------------------------------- Center-implicit para ----------------------------------- %
+        % ----------------------------------- FDM para ----------------------------------- %
         % f1 f2 
         df1 = cell(npipes,1); df2 = cell(npipes,1);
         for k = 1:npipes
@@ -161,11 +161,18 @@ for t = 1:N
         end
         for k = 1:npipes
             for i = 1:M(k)
-                df1{k}(i) = (Pipe_Hs{k}(i,t+1)-Pipe_Hs{k}(i,t)+Pipe_Hs{k}(i+1,t+1)-Pipe_Hs{k}(i+1,t))/tau + ...
-                            (Pipe_m{k}(i+1,t)-Pipe_m{k}(i,t)+Pipe_m{k}(i+1,t+1)-Pipe_m{k}(i,t+1))/h*a*a/rho/g/s(k);
-                df2{k}(i) = (Pipe_Hs{k}(i+1,t)-Pipe_Hs{k}(i,t)+Pipe_Hs{k}(i+1,t+1)-Pipe_Hs{k}(i,t+1))*g/h + ...
-                            (Pipe_m{k}(i+1,t+1)-Pipe_m{k}(i+1,t)+Pipe_m{k}(i,t+1)-Pipe_m{k}(i,t))/tau/rho/s(k) + ...
-                            (Pipe_m{k}(i,t)+Pipe_m{k}(i,t+1)+Pipe_m{k}(i+1,t)+Pipe_m{k}(i+1,t+1))^2*Kf(k)/16/D(k)/rho/rho/s(k)/s(k);  
+                % Centered Implicit Difference Scheme
+                % df1{k}(i) = (Pipe_Hs{k}(i,t+1)-Pipe_Hs{k}(i,t)+Pipe_Hs{k}(i+1,t+1)-Pipe_Hs{k}(i+1,t))/tau + ...
+                %             (Pipe_m{k}(i+1,t)-Pipe_m{k}(i,t)+Pipe_m{k}(i+1,t+1)-Pipe_m{k}(i,t+1))/h*a*a/rho/g/s(k);
+                % df2{k}(i) = (Pipe_Hs{k}(i+1,t)-Pipe_Hs{k}(i,t)+Pipe_Hs{k}(i+1,t+1)-Pipe_Hs{k}(i,t+1))*g/h + ...
+                %             (Pipe_m{k}(i+1,t+1)-Pipe_m{k}(i+1,t)+Pipe_m{k}(i,t+1)-Pipe_m{k}(i,t))/tau/rho/s(k) + ...
+                %             (Pipe_m{k}(i,t)+Pipe_m{k}(i,t+1)+Pipe_m{k}(i+1,t)+Pipe_m{k}(i+1,t+1))^2*Kf(k)/16/D(k)/rho/rho/s(k)/s(k);  
+                % Implicit Euler Method
+                df1{k}(i) = (Pipe_Hs{k}(i+1,t+1)-Pipe_Hs{k}(i+1,t))/tau + ...
+                           (Pipe_m{k}(i+1,t+1)-Pipe_m{k}(i,t+1))/h*a*a/rho/g/s(k);
+                df2{k}(i) = (Pipe_Hs{k}(i+1,t+1)-Pipe_Hs{k}(i,t+1))*g/h + ...
+                           (Pipe_m{k}(i+1,t+1)-Pipe_m{k}(i+1,t))/rho/s(k)/tau + ...
+                           Pipe_m{k}(i+1,t+1)*Pipe_m{k}(i+1,t+1)*Kf(k)/2/D(k)/rho/rho/s(k)/s(k);
             end
         end      
         f1 = vertcat(df1{:});
@@ -176,8 +183,13 @@ for t = 1:N
         Pipe_Jf1m = cell(npipes,1); Pipe_Jf2m = cell(npipes,1);
         for k = 1:npipes
             for i = 1:M(k)
-                Pipe_Jf1H{k}(i,i) = 1/tau;
-                Pipe_Jf1H{k}(i,i+1) = 1/tau; 
+                % Centered Implicit Difference Scheme
+                % Pipe_Jf1H{k}(i,i) = 1/tau;
+                % Pipe_Jf1H{k}(i,i+1) = 1/tau; 
+                % Pipe_Jf2H{k}(i,i) = -g/h;
+                % Pipe_Jf2H{k}(i,i+1) = g/h;
+                % Implicit Euler Method
+                Pipe_Jf1H{k}(i,i+1) = 1/tau;
                 Pipe_Jf2H{k}(i,i) = -g/h;
                 Pipe_Jf2H{k}(i,i+1) = g/h;
             end
@@ -187,12 +199,15 @@ for t = 1:N
 
         for k = 1:npipes
             for i = 1:M(k)
+                % Centered Implicit Difference Scheme
+                % Pipe_Jf1m{k}(i,i) = -a*a/rho/g/s(k)/h;
+                % Pipe_Jf1m{k}(i,i+1) = a*a/rho/g/s(k)/h;
+                % Pipe_Jf2m{k}(i,i) = 1/rho/s(k)/tau+Kf(k)/D(k)/rho/rho/s(k)/s(k)/8*(Pipe_m{k}(i,t)+Pipe_m{k}(i,t+1)+Pipe_m{k}(i+1,t)+Pipe_m{k}(i+1,t+1));
+                % Pipe_Jf2m{k}(i,i+1) = 1/rho/s(k)/tau+Kf(k)/D(k)/rho/rho/s(k)/s(k)/8*(Pipe_m{k}(i,t)+Pipe_m{k}(i,t+1)+Pipe_m{k}(i+1,t)+Pipe_m{k}(i+1,t+1));
+                % Implicit Euler Method
                 Pipe_Jf1m{k}(i,i) = -a*a/rho/g/s(k)/h;
                 Pipe_Jf1m{k}(i,i+1) = a*a/rho/g/s(k)/h;
-                % Pipe_Jf2m{k}(i,i) = 1/rho/s(k)/tau+Kf(k)/D(k)/rho/rho/s(k)/s(k)/2*Pipe_m{k}(i,t+1);
-                % Pipe_Jf2m{k}(i,i+1) = 1/rho/s(k)/tau+Kf(k)/D(k)/rho/rho/s(k)/s(k)/2*Pipe_m{k}(i+1,t+1);
-                Pipe_Jf2m{k}(i,i) = 1/rho/s(k)/tau+Kf(k)/D(k)/rho/rho/s(k)/s(k)/8*(Pipe_m{k}(i,t)+Pipe_m{k}(i,t+1)+Pipe_m{k}(i+1,t)+Pipe_m{k}(i+1,t+1));
-                Pipe_Jf2m{k}(i,i+1) = 1/rho/s(k)/tau+Kf(k)/D(k)/rho/rho/s(k)/s(k)/8*(Pipe_m{k}(i,t)+Pipe_m{k}(i,t+1)+Pipe_m{k}(i+1,t)+Pipe_m{k}(i+1,t+1));
+                Pipe_Jf2m{k}(i,i+1) = 1/rho/s(k)/tau+2*Kf(k)*Pipe_m{k}(i+1,t+1)/2/D(k)/rho/rho/s(k)/s(k);
             end
         end
         Jf1m = blkdiag(Pipe_Jf1m{:});
