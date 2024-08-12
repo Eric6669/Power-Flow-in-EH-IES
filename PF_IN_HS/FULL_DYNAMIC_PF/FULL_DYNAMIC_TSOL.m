@@ -66,7 +66,7 @@ function [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Node_Ts,Nod
                 if runonce(k) == 0
                     for k2 = 1:npipes
                         if nd(k2).i == nd(k).j
-                            Cr(nd(k).j,nd(k).j) = Cr(nd(k).j,nd(k).j) + Pipe_m{nd(k).k}(1,t+1);
+                            Cr(nd(k).j,nd(k).j) = Cr(nd(k).j,nd(k).j) + Pipe_m{nd(k2).k}(1,t+1);
                         end
                     end
                 end
