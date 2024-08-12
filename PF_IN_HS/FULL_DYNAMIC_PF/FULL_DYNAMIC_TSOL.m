@@ -21,14 +21,14 @@ function [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Node_Ts,Nod
         if nd(k).i <= nloads
             if nd(k).mix_supply == 1
                 % Cs(i,i)
-                Cs(nd(k).i,nd(k).i) = Cs(nd(k).i,nd(k).i) + Pipe_m{nd(k).k}(1,t);
+                Cs(nd(k).i,nd(k).i) = Cs(nd(k).i,nd(k).i) + Pipe_m{nd(k).k}(1,t+1);
                 % judge j load node?
                 if nd(k).j <= nloads
                     % is loadnode
-                    Cs(nd(k).i,nd(k).j) = -Pipe_m{nd(k).k}(end,t)*W(nd(k).k);
-                    bs(nd(k).i) = bs(nd(k).i) + Pipe_m{nd(k).k}(end,t)*b_supply{nd(k).k};
+                    Cs(nd(k).i,nd(k).j) = -Pipe_m{nd(k).k}(end,t+1)*W(nd(k).k);
+                    bs(nd(k).i) = bs(nd(k).i) + Pipe_m{nd(k).k}(end,t+1)*b_supply{nd(k).k};
                 else
-                    bs(nd(k).i) = bs(nd(k).i) + Pipe_m{nd(k).k}(end,t)*(W(nd(k).k)*Node_Ts{nd(k).j}(t)+b_supply{nd(k).k});
+                    bs(nd(k).i) = bs(nd(k).i) + Pipe_m{nd(k).k}(end,t+1)*(W(nd(k).k)*Node_Ts{nd(k).j}(t)+b_supply{nd(k).k});
                 end
             else
                 Cs(nd(k).i,nd(k).i) = 1;
@@ -57,16 +57,16 @@ function [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Node_Ts,Nod
         if nd(k).j <= nloads
             % mix load nodes
             if nd(k).mix_return == 1
-                Cr(nd(k).j,nd(k).i) = -Pipe_m{nd(k).k}(end,t)*W(nd(k).k);
-                br(nd(k).j) = br(nd(k).j) + Pipe_m{nd(k).k}(end,t)*b_return{nd(k).k};
+                Cr(nd(k).j,nd(k).i) = -Pipe_m{nd(k).k}(end,t+1)*W(nd(k).k);
+                br(nd(k).j) = br(nd(k).j) + Pipe_m{nd(k).k}(end,t+1)*b_return{nd(k).k};
                 if runonce(k) == 0
-                    br(nd(k).j) = br(nd(k).j) + Node_m{nd(k).j}(t)*Node_To{nd(k).j}(t);
+                    br(nd(k).j) = br(nd(k).j) + Node_m{nd(k).j}(t+1)*Node_To{nd(k).j}(t);
                 end
                 % 从j流出的所有m
                 if runonce(k) == 0
                     for k2 = 1:npipes
                         if nd(k2).i == nd(k).j
-                            Cr(nd(k).j,nd(k).j) = Cr(nd(k).j,nd(k).j) + Pipe_m{nd(k).k}(1,t);
+                            Cr(nd(k).j,nd(k).j) = Cr(nd(k).j,nd(k).j) + Pipe_m{nd(k).k}(1,t+1);
                         end
                     end
                 end
@@ -93,7 +93,7 @@ function [newTs,newTo,newTr] = FULL_DYNAMIC_TSOL(W,b_return,b_supply,Node_Ts,Nod
     for k = 1:npipes
         if nd(k).j > nloads
             if nd(k).mix_return == 1
-                newTr(nd(k).j) = newTr(nd(k).j) + (Pipe_m{nd(k).k}(end,t)*(newTr(nd(k).i)*W(nd(k).k)+b_return{nd(k).k}))/(-Node_m{nd(k).j}(t));
+                newTr(nd(k).j) = newTr(nd(k).j) + (Pipe_m{nd(k).k}(end,t+1)*(newTr(nd(k).i)*W(nd(k).k)+b_return{nd(k).k}))/(-Node_m{nd(k).j}(t+1));
             else
                 newTr(nd(k).j) = W(nd(k).k)*newTr(nd(k).i)+b_return{nd(k).k};
             end
